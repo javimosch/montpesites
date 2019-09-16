@@ -14,6 +14,7 @@
         "handlebars": "^4.2.0",
         "html-minifier": "^3.5.21",
         "html-uglify": "^1.2.1",
+        "moment-timezone": "^0.5.26",
         "nodemon": "^1.19.1",
         "pug": "^2.0.4",
         "require-from-string": "^2.0.2",

@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 
-const projectCWD = process.cwd()
-
 require('dotenv').config({
     silent: true
 })
+const projectCWD = process.cwd()
 const argv = require('yargs').argv
 const fs = require('fs')
 const minify = require('html-minifier').minify
@@ -12,12 +11,21 @@ const sander = require('sander')
 const pug = require('pug')
 const handlebars = require('handlebars')
 const requireFromString = require('require-from-string')
+const moment = require('moment-timezone')
+
+var now = () =>
+    moment()
+    .tz('Europe/Paris')
+    .format('DD-MM-YY HH:mm:ss')
 require('./server/handlebarsTemplates')(handlebars)
-const PORT = process.env.PORT || 3000
+
 const language = require('./server/language')
 let express = require('express')
+
+const PORT = process.env.PORT || 3000
 var app = express()
 app.language = language
+app.translate = ctx => app.language.translate(ctx, app)
 
 let layoutParams = [`head_title`, `article_title`]
 
@@ -56,14 +64,20 @@ if (argv.watch) {
                 pageName = pageName.substring(0, pageName.indexOf('/'))
                 console.log(`Compiling ${pageName}`)
                 setTimeout(() => {
-                    buildSite(pageName)
+                    buildPage(pageName)
                 }, 200)
-            } else {
-                console.log(`No changes ${path}`)
+                return
             }
 
             if (path.indexOf('/layouts/') !== -1) {
-                buildSite()
+                setTimeout(() => {
+                    buildSite()
+                }, 200)
+                return
+            }
+
+            if (path.indexOf('public_html') === -1) {
+                console.log(`No changes ${path}`)
             }
         })
 }
@@ -72,7 +86,7 @@ if (argv.server) {
     var server = require('http').Server(app)
 
     server.listen(PORT)
-    console.log('Server ready at', PORT)
+    console.log(now(), `Server ready at`, PORT)
     app.use(
         '/',
         express.static(require('path').join(process.cwd(), 'public_html'))
@@ -89,6 +103,12 @@ async function buildPage(pageName) {
         pageName,
         'index.js'
     )
+
+    if (!(await sander.exists(jsModulePath))) {
+        console.log('SKIP', pageName)
+        return
+    }
+
     var jsModule = (await sander.readFile(jsModulePath)).toString('utf-8')
     var requireFromString = require('require-from-string')
     let fn = requireFromString(jsModule)
@@ -111,7 +131,7 @@ async function buildPage(pageName) {
                 .split(`-`)
                 .join(` `)
                 .toUpperCase()
-            options = await language.translate(options)
+            options = await language.translate(options, app)
             html = handlebars.compile(html)(options)
         }
 
@@ -121,13 +141,15 @@ async function buildPage(pageName) {
 }
 
 async function buildSite() {
+    app.config = await require('./server/config').getConfig(app)
     let pagesPath = require('path').join(projectCWD, 'src/pages')
     let pagesList = await sander.readdir(pagesPath)
     let pages = pagesList.map(async pageName => {
         return await buildPage(pageName)
     })
     await Promise.all(pages)
-    console.log(`buildSite done at ${Date.now()}`)
+
+    console.log(`${now()} Site compiled`)
 }
 
 async function buildFile(options = {}) {
@@ -161,6 +183,27 @@ async function buildFile(options = {}) {
         }
 
         html = layout.split(`%page_content%`).join(html)
+
+        if (app.config.layoutPartials) {
+            await Promise.all(
+                app.config.layoutPartials.map(name => {
+                    return (async() => {
+                        let partialPath = require('path').join(
+                            projectCWD,
+                            'src/layouts',
+                            name
+                        )
+                        if (await sander.exists(partialPath)) {
+                            let partialRaw = (await sander.readFile(partialPath)).toString(
+                                'utf-8'
+                            )
+                            html = html.split(`%${name.split('.')[0]}%`).join(partialRaw)
+                        }
+                    })()
+                })
+            )
+        }
+
         layoutParams.forEach(param => {
             if (options[param]) {
                 html = html.split(`%${param}%`).join(options[param])
