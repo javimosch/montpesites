@@ -4,6 +4,10 @@ module.exports = {
     async getLocales(app = {}) {
         let defaultBasePath = require('path').join(process.cwd(), 'src')
         let source = require('path').join(app.cwd || defaultBasePath, `locales.js`)
+        if (!(await sander.exists(source))) {
+            console.log('src/locales.js not found')
+            return {}
+        }
         var locales = (await sander.readFile(source)).toString('utf-8')
         locales = requireFromString(locales)
         locales = await locales(app)

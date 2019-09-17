@@ -63,7 +63,7 @@ if (argv.watch) {
                     .join(``)
                 pageName = pageName.split(`/pages/`).join(``)
                 pageName = pageName.substring(0, pageName.indexOf('/'))
-                console.log(`Compiling ${pageName}`)
+                console.log(now(),`Compiling page ${pageName}`)
                 setTimeout(() => {
                     buildPage(pageName)
                 }, 200)
@@ -101,6 +101,7 @@ function startServer() {
     if (argv.server && !serverStarted) {
         serverStarted = true
         var server = require('http').Server(app)
+        require('./server/editorApi')(app)
         server.listen(PORT)
         console.log(now(), `Server ready at`, PORT,`(${process.env.NODE_ENV==='production'?'production':'development'})`)
         app.use(

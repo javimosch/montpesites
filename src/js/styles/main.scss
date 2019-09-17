@@ -1,0 +1,12 @@
+@import './variables.scss';
+body {
+    padding: 0px;
+    padding-top: 60px;
+    margin: 0px;
+}
+
+@media (max-width: $breakSmall) {}
+
+@media (max-width: 1047px) {}
+
+@media (min-width: 1048px) {}

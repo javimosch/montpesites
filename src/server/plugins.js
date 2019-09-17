@@ -7,6 +7,8 @@ var now = () =>
     .format('DD-MM-YY HH:mm:ss')
 const timeSpan = require('time-span')
 
+var cachedPlugins = {}
+
 module.exports = {
     async runPluginsWithPosition(position, app, args = {}) {
         let plugins = app.config.plugins
@@ -14,34 +16,42 @@ module.exports = {
         await Promise.all(
             Object.keys(plugins).map(plugginName => {
                 return (async() => {
-                    let plugin = require('path').join(
-                        __dirname,
-                        'plugins',
-                        `${plugginName}.js`
-                    )
-                    if (!(await sander.exists(plugin))) {
-                        console.log(now(), `Invalid plugin ${plugginName}`)
-                        return null
+                    let pluginOptions = plugins[plugginName]
+
+                    let plugin = null
+
+                    if (!cachedPlugins[plugginName]) {
+                        plugin = require('path').join(
+                            __dirname,
+                            'plugins',
+                            `${plugginName}.js`
+                        )
+                        if (!(await sander.exists(plugin))) {
+                            console.log(now(), `Invalid plugin ${plugginName}`)
+                            return null
+                        }
+                        plugin = (await sander.readFile(plugin)).toString('utf-8')
+                        plugin = requireFromString(plugin)
+                        plugin = await plugin(app, pluginOptions)
+                        cachedPlugins[plugginName] = plugin
+                    } else {
+                        plugin = cachedPlugins[plugginName]
                     }
-                    plugin = (await sander.readFile(plugin)).toString('utf-8')
-                    plugin = requireFromString(plugin)
-                    plugin = await plugin(app)
 
                     if (plugin instanceof Array) {
                         plugin = plugin.find(pluginItem => pluginItem.position == position)
                     }
 
                     if (plugin && plugin.position == position) {
-                        let options = plugins[plugginName]
-                        options.enabled =
-                            options.enabled === undefined ? true : options.enabled
-                        if (!options.enabled) {
+                        pluginOptions.enabled =
+                            pluginOptions.enabled === undefined ? true : pluginOptions.enabled
+                        if (!pluginOptions.enabled) {
                             return
                         }
 
                         try {
                             const end = timeSpan()
-                            await plugin.execute(options, args)
+                            await plugin.execute(args, pluginOptions)
                             console.log(
                                 now(),
                                 `${position} ${plugginName} took `,

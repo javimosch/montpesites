@@ -1,9 +1,9 @@
 const rimraf = require('rimraf')
 const sander = require('sander')
-module.exports = async app => {
+module.exports = async(app, pluginpluginOptions) => {
     return {
         position: 'beforeFullBuild',
-        async execute(options = {}) {
+        async execute(params = {}, pluginOptions = {}) {
             let dirs = await sander.readdir(
                 require('path').join(process.cwd(), app.config.distFolder)
             )
@@ -13,8 +13,8 @@ module.exports = async app => {
                     return dir.indexOf('.') === -1
                 })
                 .filter(dir => {
-                    if (options.preserveFolders) {
-                        return !options.preserveFolders.includes(dir)
+                    if (pluginOptions.preserveFolders) {
+                        return !pluginOptions.preserveFolders.includes(dir)
                     } else {
                         return true
                     }

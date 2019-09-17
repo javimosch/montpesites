@@ -12,160 +12,240 @@ var debug = function() {
     console.log.apply(console, args)
 }
 
-module.exports = async app => {
+module.exports = async(app, pluginOptions) => {
     const sander = require('sander')
     var bundlerMiddleware = createWebpackBundlerMiddleware()
 
     async function executeBundlerMiddleware(moduleName, req, res) {
-        let module = app.config.bundles[moduleName]
-        let entry = require('path').join(process.cwd(), 'src', module.source)
-        let output = require('path').join(
-            process.cwd(),
-            app.config.distFolder,
-            module.target
-        )
+        return new Promise(async(resolve, reject) => {
+            let module = app.config.bundles[moduleName]
+            let entry = require('path').join(process.cwd(), 'src', module.source)
+            let output = require('path').join(
+                process.cwd(),
+                app.config.distFolder,
+                module.target
+            )
 
-        if (!(await sander.exists(entry))) {
-            await sander.writeFile(output, `INVALID SOURCE`)
-            if (res) {
-                res.sendFile(output)
+            if (!(await sander.exists(entry))) {
+                await sander.writeFile(output, `INVALID SOURCE`)
+                if (res) {
+                    res.sendFile(output)
+                }
+                return
             }
-            return
-        }
 
-        bundlerMiddleware({
-            entry,
-            output
-        })(req, res)
+            bundlerMiddleware({
+                entry,
+                output,
+                pluginOptions,
+                callback: err => {
+                    resolve()
+                }
+            })(req, res)
+        })
     }
 
     if (process.env.NODE_ENV !== 'production') {
-        app.use((req, res, next) => {
-            if (app.config.bundles) {
-                let matchedModuleKey = Object.keys(app.config.bundles).find(name => {
-                    let module = app.config.bundles[name]
-                    return module.target === req.url
-                })
-                if (matchedModuleKey) {
-                    executeBundlerMiddleware(matchedModuleKey, req, res)
-                } else {
-                    next()
+        const webpack = require('webpack')
+        const webpackDevMiddleware = require('webpack-dev-middleware')
+        Object.keys(app.config.bundles).forEach(moduleName => {
+            let module = app.config.bundles[moduleName]
+            let entry = require('path').join(process.cwd(), 'src', module.source)
+            let output = require('path').join(
+                process.cwd(),
+                app.config.distFolder,
+                module.target
+            )
+            let options = Object.assign({}, pluginOptions, {
+                output,
+                entry
+            })
+            options.entry = [
+                'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000',
+                options.entry
+            ]
+            const compiler = webpack(getWebpackConfig(options))
+            let middlewareOptions = {
+                    lazy: false,
+                    logLevel: 'info',
+                    logTime: true,
+                    publicPath: '/',
+                    writeToDisk: false,
+                    watchOptions: {
+                        aggregateTimeout: 200
+                    }
                 }
-            } else {
-                next()
-            }
+                // console.log('ADDING MIDDLEWARE', middlewareOptions)
+            app.use(webpackDevMiddleware(compiler, middlewareOptions))
+            app.use(require('webpack-hot-middleware')(compiler))
         })
+
+        /*
+
+                                            app.use((req, res, next) => {
+                                                if (app.config.bundles && pluginOptions.compileOnRequest === true) {
+                                                    let matchedModuleKey = Object.keys(app.config.bundles).find(name => {
+                                                        let module = app.config.bundles[name]
+                                                        return module.target === req.url
+                                                    })
+                                                    if (matchedModuleKey) {
+                                                        executeBundlerMiddleware(matchedModuleKey, req, res, pluginOptions)
+                                                    } else {
+                                                        next()
+                                                    }
+                                                } else {
+                                                    next()
+                                                }
+                                            }) */
     }
 
     return [{
             position: 'beforeFullBuild',
-            async execute(options = {}) {}
+            async execute(params = {}) {
+                await Promise.all(
+                    Object.keys(app.config.bundles).map(key => {
+                        return (async() => {
+                            // executeBundlerMiddleware(key, null, null, pluginOptions)
+                        })()
+                    })
+                )
+            }
         },
         {
             position: 'watch:js',
-            async execute(options = {}, params) {
+            async execute(params = {}, pluginOptions = {}) {
+                if (!app.config && !app.config.bundles) return
                 let matchedModuleKey = Object.keys(app.config.bundles).find(name => {
                     let module = app.config.bundles[name]
                     return module.source == params.path
                 })
+                let isWatchUnder = !!pluginOptions.watchUnder &&
+                    params.path.indexOf(pluginOptions.watchUnder) != -1
                 if (matchedModuleKey) {
-                    executeBundlerMiddleware(matchedModuleKey, null, null)
+                    /* await executeBundlerMiddleware(
+                                                                                                                  matchedModuleKey,
+                                                                                                                  null,
+                                                                                                                  null,
+                                                                                                                  pluginOptions
+                                                                                                              ) */
+                }
+                if (isWatchUnder) {
+                    await Promise.all(
+                        Object.keys(app.config.bundles).map(key => {
+                            return (async() => {
+                                // await executeBundlerMiddleware(key, null, null, pluginOptions)
+                            })()
+                        })
+                    )
                 }
             }
         }
     ]
 }
 
-function createWebpackBundlerMiddleware() {
-    const sander = require('sander')
-    let cache = {}
-    return function webpackMiddleware(options = {}) {
-        return function webpackMiddlewareInstance(req, res) {
-            // serve from cache if middleware and production
-            if (
-                process.env.NODE_ENV === 'production' &&
-                !!cache[options.entry + '_' + options.output] &&
-                !!res
-            ) {
-                return res.sendFile(options.output)
-            }
+function getWebpackConfig(pluginOptions) {
+    let output = {
+        filename: pluginOptions.output.substring(
+            pluginOptions.output.lastIndexOf('/') + 1
+        ),
+        path: pluginOptions.output.substring(
+            0,
+            pluginOptions.output.lastIndexOf('/') + 1
+        ),
+        publicPath: '/'
+    }
+    let module = {
+        rules: [{
+            test: /\.css$/i,
+            use: ['style-loader', 'css-loader']
+        }]
+    }
 
-            const webpack = require('webpack')
-            let output = {
-                filename: options.output.substring(options.output.lastIndexOf('/') + 1),
-                path: options.output.substring(0, options.output.lastIndexOf('/') + 1)
-            }
-            const end = timeSpan()
-            webpack({
-                    mode: process.env.NODE_ENV === 'production' ?
-                        'production' :
-                        'development',
-                    entry: options.entry,
-                    output,
-                    module: getModuleSection()
-                },
-                async(err, stats) => {
-                    if (err || (stats && stats.hasErrors())) {
-                        var errors = ''
-                        if (!stats.errors &&
-                            stats.compilation &&
-                            stats.compilation.errors
-                        ) {
-                            stats.errors = stats.compilation.errors
-                        }
-                        if (stats.errors && stats.errors.length > 0) {
-                            try {
-                                errors = JSON.stringify(stats.errors || [], null, 4).red
-                            } catch (err) {
-                                errors = stats.errors
-                            }
-                        } else {
-                            errors = {
-                                err: (err && err.stack) || err,
-                                warnings: stats.warnings,
-                                errors: stats.errors
-                            }
-                        }
-                        debug('ERROR'.red, errors)
-                        if (res) {
-                            res.status(500).send()
-                        }
-                    } else {
-                        if (res) {
-                            let raw = (await sander.readFile(options.output)).toString(
-                                'utf-8'
-                            )
-                            if (options.transform) {
-                                raw = options.transform(raw, req)
-                                if (raw instanceof Promise) {
-                                    raw = await raw
-                                }
-                            }
-                            res.header('Content-Type', 'text/javascript')
-                            res.send(raw)
-                        } else {
-                            // await sander.writeFile(options.output, html)
-                        }
-                        debug(
-                            require('path').basename(options.entry),
-                            `Bundled in`,
-                            end.seconds().toFixed(3)
-                        )
-                        if (process.env.NODE_ENV === 'production' && !options.transform) {
-                            cache[options.entry + '_' + options.output] = true
-                        }
-                    }
-                }
-            )
+    if (pluginOptions.module && pluginOptions.module.rules) {
+        if (pluginOptions.replaceRules) {
+            module.rules = pluginOptions.module.rules
+        } else {
+            module.rules = module.rules.concat(pluginOptions.module.rules)
         }
     }
 
-    function getModuleSection() {
-        return {
-            rules: [{
-                test: /\.css$/i,
-                use: ['style-loader', 'css-loader']
-            }]
+    var plugins = []
+    if (pluginOptions.plugins) {
+        plugins = plugins.concat(pluginOptions.plugins)
+    }
+    return {
+        cache: true,
+        mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+        entry: pluginOptions.entry,
+        output,
+        module,
+        plugins,
+        performance: {
+            maxEntrypointSize: 1250000,
+            maxAssetSize: 1250000,
+            hints: 'warning'
+        },
+        optimization: {
+            runtimeChunk: 'single',
+            splitChunks: {
+                cacheGroups: {
+                    commons: {
+                        test: /[\\/]node_modules[\\/]/,
+                        name: 'vendors',
+                        chunks: 'all'
+                    }
+                }
+            }
         }
+    }
+}
+
+function createWebpackBundlerMiddleware() {
+    const sander = require('sander')
+    return function webpackMiddleware(options = {}) {
+        let pluginOptions = Object.assign({}, options.pluginOptions, {
+            output: options.output,
+            entry: options.entry
+        })
+        return function webpackMiddlewareInstance(req, res) {
+            const webpack = require('webpack')
+            const end = timeSpan()
+            webpack(getWebpackConfig(pluginOptions), async(err, stats) => {
+                if (err || (stats && stats.hasErrors())) {
+                    onerror(err, stats, res)
+                } else {
+                    debug(
+                        require('path').basename(options.entry),
+                        `Bundled in`,
+                        end.seconds().toFixed(3)
+                    )
+                    if (options.callback) options.callback()
+                }
+            })
+        }
+    }
+}
+
+function onerror(err, stats, res) {
+    var errors = ''
+    if (!stats.errors && stats.compilation && stats.compilation.errors) {
+        stats.errors = stats.compilation.errors
+    }
+    if (stats.errors && stats.errors.length > 0) {
+        try {
+            errors = JSON.stringify(stats.errors || [], null, 4).red
+        } catch (err) {
+            errors = stats.errors
+        }
+    } else {
+        errors = {
+            err: (err && err.stack) || err,
+            warnings: stats.warnings,
+            errors: stats.errors
+        }
+    }
+    debug('ERROR'.red, errors)
+    if (res) {
+        res.status(500).send()
     }
 }
