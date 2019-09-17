@@ -12,11 +12,14 @@ const pug = require('pug')
 const handlebars = require('handlebars')
 const requireFromString = require('require-from-string')
 const moment = require('moment-timezone')
+const plugins = require('./server/plugins.js')
+require('colors')
 
 var now = () =>
     moment()
     .tz('Europe/Paris')
     .format('DD-MM-YY HH:mm:ss')
+    const timeSpan = require('time-span')
 require('./server/handlebarsTemplates')(handlebars)
 
 const language = require('./server/language')
@@ -26,8 +29,6 @@ const PORT = process.env.PORT || 3000
 var app = express()
 app.language = language
 app.translate = ctx => app.language.translate(ctx, app)
-
-let layoutParams = [`head_title`, `article_title`]
 
 if (argv.sitemap) {
     const SitemapGenerator = require('sitemap-generator')
@@ -45,7 +46,7 @@ if (argv.sitemap) {
     generator.start()
 }
 
-if (argv.build || argv.watch) {
+if (argv.build || argv.server) {
     buildSite()
 }
 
@@ -76,21 +77,37 @@ if (argv.watch) {
                 return
             }
 
-            if (path.indexOf('public_html') === -1) {
-                console.log(`No changes ${path}`)
+            if (['node_modules'].find(exclude => path.indexOf(exclude) != -1)) {
+                // ignore those
+                return
+            }
+
+            if (path.indexOf('/src/') != -1) {
+                let pathFromSrc = path.substr(path.lastIndexOf('/src/') + 5)
+                plugins.runPluginsWithPosition('watch:js', app, {
+                    path: pathFromSrc
+                })
+            }
+
+            if (path.indexOf(app.config.distFolder) === -1) {
+                //console.log(`No changes ${path}`)
             }
         })
 }
 
-if (argv.server) {
-    var server = require('http').Server(app)
+var serverStarted = false
 
-    server.listen(PORT)
-    console.log(now(), `Server ready at`, PORT)
-    app.use(
-        '/',
-        express.static(require('path').join(process.cwd(), 'public_html'))
-    )
+function startServer() {
+    if (argv.server && !serverStarted) {
+        serverStarted = true
+        var server = require('http').Server(app)
+        server.listen(PORT)
+        console.log(now(), `Server ready at`, PORT,`(${process.env.NODE_ENV==='production'?'production':'development'})`)
+        app.use(
+            '/',
+            express.static(require('path').join(process.cwd(), app.config.distFolder))
+        )
+    }
 }
 
 async function buildPage(pageName) {
@@ -105,26 +122,40 @@ async function buildPage(pageName) {
     )
 
     if (!(await sander.exists(jsModulePath))) {
-        console.log('SKIP', pageName)
+        console.log('SKIP (no config file)', pageName)
         return
     }
 
     var jsModule = (await sander.readFile(jsModulePath)).toString('utf-8')
     var requireFromString = require('require-from-string')
     let fn = requireFromString(jsModule)
+
+    if (typeof fn !== 'function') {
+        console.log('SKIP (invalid config file)', pageName)
+        return
+    }
+
     let options = await fn(app)
-    options.source = `/pages/${pageName}/index.html`
+
+    if (!options) {
+        console.log('SKIP (invalid config file)', pageName)
+        return
+    }
+
+    let formatType = options.format || 'html'
+
+    options.source = `/pages/${pageName}/index.${formatType}`
     options.target = options.target || `/${pageName}`
-    options.transform = async html => {
-        if (html.indexOf(`USE_PUG`) !== -1) {
-            var fn = pug.compile(html, {
+    options.transform = async raw => {
+        if (raw.indexOf(`USE_PUG`) !== -1) {
+            var fn = pug.compile(raw, {
                 basedir: require('path').join(projectCWD, 'src', `layouts`),
                 pretty: !argv.prod
                     // globals: Object.assign({}, process.env, argv)
             })
-            html = fn(layoutParams)
+            raw = fn(options)
         }
-        if (html.indexOf(`USE_HANDLEBARS`) !== -1) {
+        if (raw.indexOf(`USE_HANDLEBARS`) !== -1) {
             options.page_name =
                 options.page_name ||
                 pageName
@@ -132,16 +163,24 @@ async function buildPage(pageName) {
                 .join(` `)
                 .toUpperCase()
             options = await language.translate(options, app)
-            html = handlebars.compile(html)(options)
+            raw = handlebars.compile(raw)(options)
         }
 
-        return html
+        return raw
     }
     return await buildFile(options)
 }
 
 async function buildSite() {
+    const end = timeSpan()
     app.config = await require('./server/config').getConfig(app)
+
+    app.config.distFolder = app.config.distFolder || `public_html`
+
+    await plugins.runPluginsWithPosition('beforeFullBuild', app)
+
+    startServer()
+
     let pagesPath = require('path').join(projectCWD, 'src/pages')
     let pagesList = await sander.readdir(pagesPath)
     let pages = pagesList.map(async pageName => {
@@ -149,17 +188,45 @@ async function buildSite() {
     })
     await Promise.all(pages)
 
-    console.log(`${now()} Site compiled`)
+    console.log(`${now()} Site compiled in`,end.seconds().toFixed(3))
 }
 
 async function buildFile(options = {}) {
-    options.source = options.source.split('.html').join('') + `.html`
+    let hasValidFormat = ['.md', '.html'].find(format => {
+        return options.source.indexOf(format) != -1
+    })
+    if (!hasValidFormat) {
+        options.source = options.source + `.html`
+    }
     if (argv.test) {
         // console.log(`READ ${projectCWD}/src/${options.source}`)
     }
     let source = require('path').join(projectCWD, 'src', options.source)
 
-    var html = (await sander.readFile(source)).toString('utf-8')
+    if (!(await sander.exists(source))) {
+        console.log('SKIP (source not found)', options.source)
+        return
+    }
+
+    var raw = (await sander.readFile(source)).toString('utf-8')
+
+    var mdFormatHandler = async raw => {
+        var marky = require('marky-markdown')
+        return marky(raw)
+    }
+
+    let sourceFormatType = source.substr(source.lastIndexOf('.') + 1)
+    if (sourceFormatType !== 'html') {
+        options.formatTransformHandler = options.formatTransformHandler || {
+            md: mdFormatHandler
+        }
+        if (!options.formatTransformHandler[sourceFormatType]) {
+            raw = `FORMAT NOT SUPPORTED: ${sourceFormatType}`
+        } else {
+            raw = await options.formatTransformHandler[sourceFormatType](raw)
+        }
+    }
+
     if (options.layout) {
         let layout = options.layout.split(`.html`).join(``) + `.html`
         let layoutPath = require('path').join(
@@ -168,56 +235,60 @@ async function buildFile(options = {}) {
             `layouts`,
             `${layout}`
         )
-        layout = (await sander.readFile(layoutPath)).toString('utf-8')
 
-        let layoutConfig = layoutPath.split('.html').join('.js')
+        if (!(await sander.exists(layoutPath))) {
+            console.log(now(), `SKIP Invalid layout`, options.layout)
+        } else {
+            layout = (await sander.readFile(layoutPath)).toString('utf-8')
 
-        if (await sander.exists(layoutConfig)) {
-            layoutConfig = (await sander.readFile(layoutConfig)).toString('utf-8')
-            layoutConfig = requireFromString(layoutConfig)
-            layoutConfig = await layoutConfig(app, options)
+            let layoutConfig = layoutPath.split('.html').join('.js')
 
-            if (layoutConfig.context) {
-                Object.assign(options, layoutConfig.context)
+            if (await sander.exists(layoutConfig)) {
+                layoutConfig = (await sander.readFile(layoutConfig)).toString('utf-8')
+                layoutConfig = requireFromString(layoutConfig)
+                layoutConfig = await layoutConfig(app, options)
+
+                if (layoutConfig.context) {
+                    Object.assign(options, layoutConfig.context)
+                }
             }
-        }
 
-        html = layout.split(`%page_content%`).join(html)
+            raw = layout.split(`%page_content%`).join(raw)
 
-        if (app.config.layoutPartials) {
-            await Promise.all(
-                app.config.layoutPartials.map(name => {
-                    return (async() => {
-                        let partialPath = require('path').join(
-                            projectCWD,
-                            'src/layouts',
-                            name
-                        )
-                        if (await sander.exists(partialPath)) {
-                            let partialRaw = (await sander.readFile(partialPath)).toString(
-                                'utf-8'
-                            )
-                            html = html.split(`%${name.split('.')[0]}%`).join(partialRaw)
-                        }
-                    })()
-                })
+            let partialsPath = require('path').join(projectCWD, 'src', `layouts`)
+            let partials = (await sander.readdir(partialsPath)).filter(
+                n => n.indexOf('_') === 0
             )
-        }
 
-        layoutParams.forEach(param => {
-            if (options[param]) {
-                html = html.split(`%${param}%`).join(options[param])
+            if (partials) {
+                await Promise.all(
+                    partials.map(name => {
+                        return (async() => {
+                            let partialPath = require('path').join(
+                                projectCWD,
+                                'src/layouts',
+                                name
+                            )
+                            if (await sander.exists(partialPath)) {
+                                let partialRaw = (await sander.readFile(partialPath)).toString(
+                                    'utf-8'
+                                )
+                                raw = raw.split(`%${name.split('.')[0]}%`).join(partialRaw)
+                            }
+                        })()
+                    })
+                )
             }
-        })
+        }
     }
     if (options.transform) {
-        html = options.transform(html)
-        if (html instanceof Promise) {
-            html = await html
+        raw = options.transform(raw)
+        if (raw instanceof Promise) {
+            raw = await raw
         }
     }
     if (argv.prod) {
-        html = minify(html, {
+        raw = minify(raw, {
             removeAttributeQuotes: true,
             collapseWhitespace: true,
             conservativeCollapse: true,
@@ -234,7 +305,7 @@ async function buildFile(options = {}) {
             salt: 'your-custom-salt',
             whitelist: []
         })
-        html = htmlUglify.process(html)
+        raw = htmlUglify.process(raw)
     }
     options.target = options.target.split('index.html').join('')
     options.target = require('path').join(options.target, `index.html`)
@@ -242,8 +313,8 @@ async function buildFile(options = {}) {
         console.log(`WILL WRITE ${options.target}`)
     } else {
         await sander.writeFile(
-            `${process.cwd()}/public_html${options.target}`,
-            html
+            `${process.cwd()}/${app.config.distFolder}${options.target}`,
+            raw
         )
     }
 }
