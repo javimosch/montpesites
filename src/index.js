@@ -57,7 +57,7 @@ if (argv.watch) {
     var chokidar = require('chokidar')
     chokidar
         .watch(projectCWD, {
-            ignored: /(^|[\/\\])\../
+            ignored: ['**/node_modules/**/*', '**/.git/**/*', /(^|[\/\\])\../]
         })
         .on('change', (path, stats) => {
             if (path.indexOf('/pages/') !== -1) {
