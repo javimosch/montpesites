@@ -33,17 +33,7 @@ This guidelines should allow you to use this tool without the GUI (If the GUI is
 
 ````js
 yarn add -g montpesites
-ms init //inside an empty directory
-ms --port 3000
-//The GUI should be accessible by http://localhost:3000
-````
-
-#### Development without GUI
-
-````js
-yarn add -g montpesites
-ms init //inside an empty directory
-ms --watch
+ms init
 ````
 
 ### Pages
@@ -115,7 +105,7 @@ src/awesome-article/index.md
 
 ## Platform development
 
-#### Client
+## Client
 
 The GUI web app is an static client side app rendered using the project itself.
 
@@ -127,7 +117,7 @@ Structure
 - ms.config.js
 ````
 
-#### Server
+## Server
 
 ````md
 Structure
@@ -135,7 +125,7 @@ Structure
 - src/server
 ````
 
-#### How to run
+## How to run
 
 For development
 
@@ -146,7 +136,7 @@ yarn dev
 For production
 
 ````js
-yarn build
+yarn start
 ````
 
 ## Issues
@@ -162,4 +152,4 @@ We are eager to find contributors for this project. If you want to help please e
 This tools is being developed for free by misitioba.com.
 Any contribution is more than welcome.
 
-### https://fr.liberapay.com/misitioba
+### [MisitioBA on Liberapay](https://fr.liberapay.com/misitioba)

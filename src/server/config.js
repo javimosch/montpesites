@@ -13,6 +13,14 @@ module.exports = {
 }
 
 async function getConfig(options = {}) {
+    if (process.env.NODE_ENV !== 'production') {
+        if (argv.build) {
+            process.env.NODE_ENV = 'production'
+        } else {
+            process.env.NODE_ENV = 'development'
+        }
+    }
+
     let configPath = require('path').join(
         options.cwd || process.cwd(),
         'ms.config.js'
@@ -22,14 +30,6 @@ async function getConfig(options = {}) {
     config = config(options)
     if (config instanceof Promise) {
         config = await config
-    }
-
-    if (process.env.NODE_ENV !== 'production') {
-        if (argv.build) {
-            process.env.NODE_ENV = 'production'
-        } else {
-            process.env.NODE_ENV = 'development'
-        }
     }
 
     config.env = Object.assign({}, process.env, config.env || {})
