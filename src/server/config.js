@@ -14,7 +14,7 @@ module.exports = {
 
 async function getConfig(options = {}) {
     if (process.env.NODE_ENV !== 'production') {
-        if (argv.build) {
+        if (argv.build || argv.serve) {
             process.env.NODE_ENV = 'production'
         } else {
             process.env.NODE_ENV = 'development'
