@@ -109,13 +109,20 @@ function server() {
                 if (path.indexOf(app.config.distFolder) === -1) {
                     // console.log(`No changes ${path}`)
                 }
+
+
+                if (path.indexOf('locales.js') != -1) {
+                    setTimeout(() => {
+                        buildSite()
+                    }, 200)
+                }
             })
     }
 
     var serverStarted = false
 
     function startServer() {
-        if ((argv.server || argv.dev) && !serverStarted) {
+        if ((argv.server || argv.serve || argv.dev) && !serverStarted) {
             serverStarted = true
             var server = require('http').Server(app)
             require('./server/editorApi')(app)

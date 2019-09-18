@@ -38,7 +38,7 @@ module.exports = {
                     locales[lang][context[x].split('I18N_').join('')] || context[x]
             }
         }
-        context.locales = locales[lang]
+        context.locales = context.lng = context.lang = context.i18n = locales[lang]
         return context
     }
 }
