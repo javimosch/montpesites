@@ -35,7 +35,7 @@ function server() {
     const language = require('./server/language')
     let express = require('express')
 
-    const PORT = process.env.PORT || 3000
+    
     var app = express()
     app.language = language
     app.translate = ctx => app.language.translate(ctx, app)
@@ -56,17 +56,19 @@ function server() {
         generator.start()
     }
 
-    if (argv.build || argv.server) {
+    if (argv.build || argv.server || argv.serve || argv.dev) {
         buildSite()
     }
 
-    if (argv.watch) {
+    if (argv.watch || argv.dev) {
+        console.log(now(),`Watch`,require('path').basename(projectCWD))
         var chokidar = require('chokidar')
         chokidar
             .watch(projectCWD, {
                 ignored: ['**/node_modules/**/*', '**/.git/**/*', /(^|[\/\\])\../]
             })
             .on('change', (path, stats) => {
+                console.log(now(),'Watch change', require('path').basename(path))
                 if (path.indexOf('/pages/') !== -1) {
                     let pageName = path
                         .split(require('path').join(process.cwd(), `src`))
@@ -108,10 +110,11 @@ function server() {
     var serverStarted = false
 
     function startServer() {
-        if (argv.server && !serverStarted) {
+        if ((argv.server || argv.dev) && !serverStarted) {
             serverStarted = true
             var server = require('http').Server(app)
             require('./server/editorApi')(app)
+            const PORT = argv.port ||  app.config.env.PORT || process.env.PORT || 3000
             server.listen(PORT)
             console.log(
                 now(),
@@ -195,7 +198,7 @@ function server() {
         const end = timeSpan()
         app.config = await require('./server/config').getConfig(app)
         app.config.distFolder = app.config.distFolder || `public_html`
-        console.log('NODE_ENV',process.env.NODE_ENV)
+        
         await plugins.runPluginsWithPosition('beforeFullBuild', app)
 
         startServer()

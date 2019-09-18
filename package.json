@@ -3,8 +3,8 @@
     "version": "1.0.1",
     "main": "./src/index.js",
     "scripts": {
-        "dev": "nodemon --exec 'node src/index.js --server --watch' -e js --watch src/index.js --watch src/server --watch ms.config.js",
-        "start": "cross-env NODE_ENV=production node src/index --server"
+        "dev": "nodemon --exec 'node src/index.js --dev' -e js --watch src/index.js --watch src/server --watch ms.config.js",
+        "start": "cross-env NODE_ENV=production node src/index --serve"
     },
     "dependencies": {
         "@babel/core": "^7.6.0",
