@@ -1,5 +1,7 @@
 const sander = require('sander')
 const requireFromString = require('require-from-string')
+const argv = require('yargs').argv
+
 module.exports = {
     async getConfig(options = {}) {
         let config = await getConfig(options)
@@ -21,6 +23,16 @@ async function getConfig(options = {}) {
     if (config instanceof Promise) {
         config = await config
     }
+
+    if (process.env.NODE_ENV !== 'production') {
+        if (argv.build) {
+            process.env.NODE_ENV = 'production'
+        } else {
+            process.env.NODE_ENV = 'development'
+        }
+    }
+
     config.env = Object.assign({}, process.env, config.env || {})
+
     return config
 }
