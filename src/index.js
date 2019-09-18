@@ -40,6 +40,11 @@ function server() {
     app.language = language
     app.translate = ctx => app.language.translate(ctx, app)
 
+
+    if(!argv.build && !argv.serve && !argv.server && !argv.dev && !argv.watch){
+        argv.dev = true
+    }
+
     if (argv.sitemap) {
         const SitemapGenerator = require('sitemap-generator')
 
@@ -68,7 +73,7 @@ function server() {
                 ignored: ['**/node_modules/**/*', '**/.git/**/*', /(^|[\/\\])\../]
             })
             .on('change', (path, stats) => {
-                console.log(now(),'Watch change', require('path').basename(path))
+                //console.log(now(),'Watch change', require('path').basename(path))
                 if (path.indexOf('/pages/') !== -1) {
                     let pageName = path
                         .split(require('path').join(process.cwd(), `src`))
@@ -94,7 +99,7 @@ function server() {
                     return
                 }
 
-                if (path.indexOf('/src/') != -1) {
+                if (path.indexOf('/js/') != -1) {
                     let pathFromSrc = path.substr(path.lastIndexOf('/src/') + 5)
                     plugins.runPluginsWithPosition('watch:js', app, {
                         path: pathFromSrc
@@ -210,7 +215,7 @@ function server() {
         })
         await Promise.all(pages)
 
-        console.log(`${now()} Site compiled in`, end.seconds().toFixed(3))
+        console.log(`${now()} Full build took`, end.seconds().toFixed(3))
     }
 
     async function buildFile(options = {}) {

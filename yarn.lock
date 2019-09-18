@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@alumna/reflect@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@alumna/reflect/-/reflect-1.0.2.tgz#6def116ee39bc4e0a2392ff606e6661eca6e4c21"
+  integrity sha512-6CXC6mrqywYrtayO6fJNcGLw1NUQ+Ht4Jh7xRvzKiKZAuhi6t2nsXZ4W2US6L+ZQfJGhgHLvzOrt3lnfPGyRXg==
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.5.5":
   version "7.5.5"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.5.5.tgz#bc0782f6d69f7b7d49531219699b988f669a8f9d"

@@ -14,28 +14,40 @@ module.exports = {
         let plugins = app.config.plugins
         if (!plugins) return
         await Promise.all(
-            Object.keys(plugins).map(plugginName => {
+            Object.keys(plugins).map(pluginName => {
+                // console.log(`Reading plugin`, pluginName)
                 return (async() => {
-                    let pluginOptions = plugins[plugginName]
+                    let pluginOptions = plugins[pluginName]
 
                     let plugin = null
 
-                    if (!cachedPlugins[plugginName]) {
+                    if (!cachedPlugins[pluginName]) {
                         plugin = require('path').join(
                             __dirname,
                             'plugins',
-                            `${plugginName}.js`
+                            `${pluginName}.js`
                         )
                         if (!(await sander.exists(plugin))) {
-                            console.log(now(), `Invalid plugin ${plugginName}`)
+                            console.log(now(), `Invalid plugin ${pluginName}`)
                             return null
                         }
                         plugin = (await sander.readFile(plugin)).toString('utf-8')
                         plugin = requireFromString(plugin)
-                        plugin = await plugin(app, pluginOptions)
-                        cachedPlugins[plugginName] = plugin
+
+                        var debug = (() => {
+                            return function() {
+                                var args = Array.prototype.slice.call(arguments)
+                                args.unshift(pluginName)
+                                args.unshift('Plugin')
+                                args.unshift(now())
+                                console.log.apply(console, args)
+                            }
+                        })()
+
+                        plugin = await plugin(app, pluginOptions, debug)
+                        cachedPlugins[pluginName] = plugin
                     } else {
-                        plugin = cachedPlugins[plugginName]
+                        plugin = cachedPlugins[pluginName]
                     }
 
                     if (plugin instanceof Array) {
@@ -54,7 +66,8 @@ module.exports = {
                             await plugin.execute(args, pluginOptions)
                             console.log(
                                 now(),
-                                `${position} ${plugginName} took `,
+                                'Plugin',
+                                `${position} ${pluginName} took `,
                                 end.seconds().toFixed(3)
                             )
                         } catch (err) {

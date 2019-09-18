@@ -1,11 +1,18 @@
 const requireFromString = require('require-from-string')
 const sander = require('sander')
+
+const moment = require('moment-timezone')
+var now = () =>
+    moment()
+    .tz('Europe/Paris')
+    .format('DD-MM-YY HH:mm:ss')
+
 module.exports = {
     async getLocales(app = {}) {
         let defaultBasePath = require('path').join(process.cwd(), 'src')
         let source = require('path').join(app.cwd || defaultBasePath, `locales.js`)
         if (!(await sander.exists(source))) {
-            console.log('src/locales.js not found')
+            console.log(now(), 'WARN', 'src/locales.js missing (i18N disabled)')
             return {}
         }
         var locales = (await sander.readFile(source)).toString('utf-8')
