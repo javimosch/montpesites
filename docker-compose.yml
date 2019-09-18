@@ -1,0 +1,14 @@
+version: '3.1'
+
+services:
+  app:
+    restart: always
+    build: ./
+    ports:
+      - 3000:3000
+    env_file: .env
+    environment:
+      - NODE_ENV=production
+    entrypoint: 
+      - yarn
+      - start
