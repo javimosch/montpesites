@@ -99,7 +99,7 @@ module.exports = async(app, pluginOptions) => {
                 logLevel: 'info',
                 logTime: true,
                 publicPath: '/',
-                writeToDisk: false,
+                writeToDisk: pluginOptions.writeToDisk===undefined?false: pluginOptions.writeToDisk ,
                 watchOptions: {
                     aggregateTimeout: 200
                 }
