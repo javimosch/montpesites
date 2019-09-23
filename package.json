@@ -1,7 +1,20 @@
 {
     "name": "montpesites",
-    "version": "1.0.2",
+    "version": "1.0.4",
+    "description": "Self-hosted platform to build, test and deploy static web sites.",
     "main": "./src/index.js",
+    "keywords": ["site generation", "ssg", "savoie", "javimosch"],
+    "homepage": "https://github.com/javimosch/montpesites",
+    "bugs": {
+        "url": "https://github.com/javimosch/montpesites/issues",
+        "email": "arancibiajav@gmail.com"
+    },
+    "license": "SEE LICENSE IN LICENCE",
+    "contributors": [{
+        "name": "Javier Leandro Arancibia",
+        "email": "arancibiajav@gmail.com",
+        "url": "https://arancibiajav.misitioba.com/"
+    }],
     "scripts": {
         "dev": "nodemon --exec 'node src/index.js --dev' -e js --watch src/index.js --watch src/server --watch ms.config.js",
         "start": "cross-env NODE_ENV=production node src/index --serve"
