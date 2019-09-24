@@ -34,5 +34,8 @@ async function getConfig(options = {}) {
 
     config.env = Object.assign({}, process.env, config.env || {})
 
+    config.env.PORT = argv.port || process.env.PORT || 3000
+    config.argv = argv
+
     return config
 }
