@@ -1,9 +1,14 @@
 {
     "name": "montpesites",
-    "version": "1.0.4",
+    "version": "1.0.8",
     "description": "Self-hosted platform to build, test and deploy static web sites.",
     "main": "./src/index.js",
-    "keywords": ["site generation", "ssg", "savoie", "javimosch"],
+    "keywords": [
+        "site generation",
+        "ssg",
+        "savoie",
+        "javimosch"
+    ],
     "homepage": "https://github.com/javimosch/montpesites",
     "bugs": {
         "url": "https://github.com/javimosch/montpesites/issues",
@@ -17,7 +22,8 @@
     }],
     "scripts": {
         "dev": "nodemon --exec 'node src/index.js --dev' -e js --watch src/index.js --watch src/server --watch ms.config.js",
-        "start": "cross-env NODE_ENV=production node src/index --serve"
+        "start": "cross-env NODE_ENV=production node src/index --serve",
+        "test": "jest --detectOpenHandles"
     },
     "dependencies": {
         "@alumna/reflect": "^1.0.2",
@@ -27,7 +33,9 @@
         "@fortawesome/free-solid-svg-icons": "^5.10.2",
         "@fortawesome/vue-fontawesome": "^0.1.7",
         "atob": "^2.1.2",
+        "axios": "^0.19.0",
         "babel-loader": "^8.0.6",
+        "body-parser": "^1.19.0",
         "btoa": "^1.2.1",
         "chalk": "^2.4.2",
         "cheerio": "^1.0.0-rc.2",
@@ -40,10 +48,13 @@
         "dotenv": "^6.2.0",
         "express": "^4.16.4",
         "figlet": "^1.2.4",
+        "funql-api": "^1.0.4",
         "handlebars": "^4.2.0",
         "html-minifier": "^3.5.21",
         "html-uglify": "^1.2.1",
         "inquirer": "^7.0.0",
+        "jest": "^24.9.0",
+        "jsome": "^2.5.0",
         "marky-markdown": "^12.0.0",
         "moment-timezone": "^0.5.26",
         "node-sass": "^4.12.0",
