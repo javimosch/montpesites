@@ -7,7 +7,9 @@ module.exports = async app => {
             defaultLanguage: 'en'
         },
         plugins: {
-            generateSitemap: {},
+            generateSitemap: {
+                domain:'montpesites.misitioba.com'
+            },
             cleanDistFolders: {
                 preserveFolders: ['img'],
                 enabled: true // process.env.NODE_ENV === 'production'
