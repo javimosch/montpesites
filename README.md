@@ -1,6 +1,6 @@
 # Montpesites
 
-Self-hosted platform to build, test and deploy static web sites.
+Decentralized self-hosted platform to build, test and deploy static web sites.
 
 ## How it works
 
@@ -29,7 +29,7 @@ A development version of the website being build will be available in each insta
 
 This guidelines should allow you to use this tool without the GUI (If the GUI is is still WIP or is bugged)
 
-### Website development
+## Website development
 
 ````js
 yarn add -g montpesites
@@ -103,29 +103,54 @@ src/awesome-article/index.md
     <!-- USE_HANDLEBARS -->
     ````
 
+### Sitemap generation
+
+The client can generate a sitemap file (localhost only) after build completes.
+Generator crawler with hit localhost at the targeted port (default 3000).
+
+Add the plugin as follow:
+
+````js
+//ms.config.js
+{
+    plugins:{
+        generateSitemap: {
+            domain:'mydomain.com'
+        }
+    }
+}
+````
+
+Start the server
+
+```js
+ms
+//sitemap.xml should be generated after static generation.
+```
+
 ## Platform development
 
-## Client
-
-The GUI web app is an static client side app rendered using the project itself.
+The entire project has the follow structure:
 
 ````md
-Structure
 - src/pages
 - src/layouts
-- src/js
+- src/js/api
+- src/js/components
+- src/js/containers
+- src/js/mixins
+- src/js/store
+- src/js/styles
+- src/index
+- src/server
+- src/server/plugins
+- server.js
 - ms.config.js
 ````
 
-## Server
+Note: The GUI web app is an client side app rendered using the project itself. That's why there is a ms.config.js in the root directory.
 
-````md
-Structure
-- src/index.js
-- src/server
-````
-
-## How to run
+### How to run
 
 For development
 
@@ -139,9 +164,23 @@ For production
 yarn start
 ````
 
-## Issues
+### Plugins
 
-Please feel free to add issues
+The plugins section in ms.config.js can be populated with plugins.
+Plugins are stored in /src/server/plugins
+
+If you are interested in developing a plugin please create a separate repo and send a pull request.
+
+#### List of plugins
+
+- cleanDistFolders
+- copyFolderContent
+- generateSitemap
+- webpackBundling
+
+### Issues
+
+Please feel free to add issues.
 
 ## Contributors
 
