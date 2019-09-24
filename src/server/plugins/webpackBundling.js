@@ -15,11 +15,10 @@ var debug = function() {
 }
 
 module.exports = async(app, pluginOptions) => {
-
     if (process.env.NODE_ENV !== 'production') {
         bindWebpackMiddleware()
-    }else{
-        //Modules are compiled in the beforeFullBuild hook
+    } else {
+        // Modules are compiled in the beforeFullBuild hook
     }
 
     async function compileSingleModule(moduleName) {
@@ -31,7 +30,7 @@ module.exports = async(app, pluginOptions) => {
                 app.config.distFolder,
                 module.target
             )
-            let filename = output.substr(output.lastIndexOf('/')+1)
+            let filename = output.substr(output.lastIndexOf('/') + 1)
             output = {
                 path: output.substring(0, output.lastIndexOf('/')),
                 filename: `[name].${filename}`
@@ -49,7 +48,7 @@ module.exports = async(app, pluginOptions) => {
                 output,
                 entry
             })
-            
+
             const end = timeSpan()
             webpack(getWebpackConfig(pluginOptions), async(err, stats) => {
                 if (err || (stats && stats.hasErrors())) {
@@ -66,8 +65,7 @@ module.exports = async(app, pluginOptions) => {
         })
     }
 
-    function bindWebpackMiddleware(){
-
+    function bindWebpackMiddleware() {
         const webpackDevMiddleware = require('webpack-dev-middleware')
         Object.keys(app.config.bundles).forEach(moduleName => {
             let module = app.config.bundles[moduleName]
@@ -93,17 +91,22 @@ module.exports = async(app, pluginOptions) => {
             }
             options.output = output
 
+            Object.assign(options, pluginOptions.webpackOptions || {})
+
             const compiler = webpack(getWebpackConfig(options))
             let middlewareOptions = {
                 lazy: false,
-                logLevel: 'info',
+                logLevel: 'error',
                 logTime: true,
                 publicPath: '/',
-                writeToDisk: pluginOptions.writeToDisk===undefined?false: pluginOptions.writeToDisk ,
+                writeToDisk: pluginOptions.writeToDisk === undefined ?
+                    false :
+                    pluginOptions.writeToDisk,
                 watchOptions: {
                     aggregateTimeout: 200
                 }
             }
+            Object.assign(middlewareOptions, pluginOptions.middlewareOptions || {})
             app.use(webpackDevMiddleware(compiler, middlewareOptions))
             app.use(require('webpack-hot-middleware')(compiler))
         })
