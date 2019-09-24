@@ -7,11 +7,15 @@ module.exports = async app => {
             defaultLanguage: 'en'
         },
         plugins: {
+            generateSitemap: {},
             cleanDistFolders: {
                 preserveFolders: ['img'],
                 enabled: true // process.env.NODE_ENV === 'production'
             },
             webpackBundling: {
+                webpackOptions: {
+                    devtool: process.env.NODE_ENV === 'production' ? undefined : 'eval'
+                },
                 watchUnder: 'js/',
                 compileOnRequest: true,
                 replaceRules: true,
