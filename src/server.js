@@ -2,7 +2,14 @@ module.exports = {
     startServer
 }
 
-function startServer(app, options = {}) {
+function loadHelpers(app){
+    app.helpers = {}
+    app.helpers.getPages = function(){
+        return require('./server/helpers/getPages').apply({app},arguments)
+    }
+}
+
+function startServer(app, serverOptions = {}) {
     return new Promise((resolve, reject) => {
         let express = require('express')
         app = app || express()
@@ -27,6 +34,8 @@ function startServer(app, options = {}) {
 
         app.language = language
         app.translate = ctx => app.language.translate(ctx, app)
+
+        loadHelpers(app)
 
         if (!argv.build &&
             !argv.serve &&
@@ -97,13 +106,15 @@ function startServer(app, options = {}) {
         var serverStarted = false
 
         function runServer() {
-            let jest = options.jest
+            let jest = serverOptions.jest
             if (jest || ((argv.server || argv.serve || argv.dev) && !serverStarted)) {
                 serverStarted = true
                 var server = require('http').Server(app)
 
                 require('./server/funqlApi.js')(app)
                 require('./server/editorApi')(app)
+
+                if(serverOptions.server === false) return resolve({})
 
                 const PORT = app.config.env.PORT || process.env.PORT || 3000
                 server.listen(PORT)
@@ -191,7 +202,7 @@ function startServer(app, options = {}) {
             app.config = await require('./server/config').getConfig(app)
             app.config.distFolder = app.config.distFolder || `public_html`
 
-            if(options.jest){
+            if(serverOptions.jest){
                 return runServer()
             }
 
@@ -268,7 +279,7 @@ function startServer(app, options = {}) {
                             'utf-8'
                         )
                         layoutConfig = requireFromString(layoutConfig)
-                        layoutConfig = await layoutConfig(app, options)
+                        layoutConfig = await layoutConfig(app, options, app.helpers)
 
                         if (layoutConfig.context) {
                             Object.assign(options, layoutConfig.context)

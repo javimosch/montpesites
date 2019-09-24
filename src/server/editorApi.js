@@ -30,7 +30,7 @@ function createLocalRepository(app) {
             repo.url = repoUrl
             if (!repo.ready) {
                 repo.id = uniqid()
-                repo.base = path.join(osenv.tmpdir(), `repo_${repo.id}}`)
+                repo.base = path.join(osenv.tmpdir(), `repo_${repo.id}`)
                 repo.root = path.join(repo.base, 'repo')
                 if (!(await sander.exists(repo.base))) {
                     await sh `mkdir ${repo.base}`
@@ -54,7 +54,14 @@ function createLocalRepository(app) {
             if (!repo.ready) {
                 throw new Error('REPO_NOT_READY')
             }
-            let pageDir = path.join(repo.root, 'src/pages', 'pageName')
+            let pageDir = path.join(repo.root, 'src/pages', pageName)
+
+            if(!await sander.exists(pageDir)){
+                return {
+                    err:'NOT_FOUND'
+                }
+            }
+
             let pagesFiles = await sander.readdir(pageDir)
             let response = {
                 contentFile: {
