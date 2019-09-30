@@ -46,11 +46,13 @@ function startServer(app, serverOptions = {}) {
             argv.dev = true
         }
 
-        if (argv.build || argv.server || argv.serve || argv.dev) {
+        let isProduction = process.env.NODE_ENV === 'production'
+
+        if (isProduction || argv.build || argv.server || argv.serve || argv.dev) {
             buildSite()
         }
 
-        if (argv.watch || argv.dev) {
+        if (!isProduction && (argv.watch || argv.dev)) {
             console.log(now(), `Watch`, require('path').basename(projectCWD))
             var chokidar = require('chokidar')
             chokidar
