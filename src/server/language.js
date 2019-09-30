@@ -32,10 +32,32 @@ module.exports = {
             configDefaultLanguage ||
             process.env.DEFAULT_LANGUAGE ||
             'en'
+
+        function translateObject(object) {
+            Object.keys(object).forEach(key => {
+                if (typeof key === 'string') {
+                    if (object[key].indexOf && object[key].indexOf('I18N_') === 0) {
+                        object[key] =
+                            locales[lang][object[key].split('I18N_').join('')] || object[key]
+                    }
+                }
+                if (
+                    typeof object[x] === 'object' &&
+                    Object.keys(object[key]).length > 0
+                ) {
+                    translateObject(object[x])
+                }
+            })
+        }
+
         for (var x in context) {
             if (typeof context[x] === 'string' && context[x].indexOf('I18N_') === 0) {
                 context[x] =
                     locales[lang][context[x].split('I18N_').join('')] || context[x]
+            } else {
+                if (typeof context[x] === 'object') {
+                    translateObject(context[x])
+                }
             }
         }
         context.locales = context.lng = context.lang = context.i18n = locales[lang]
