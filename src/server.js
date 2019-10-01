@@ -10,6 +10,7 @@ function loadHelpers(app){
 }
 
 function startServer(app, serverOptions = {}) {
+
     return new Promise((resolve, reject) => {
         let express = require('express')
         app = app || express()
@@ -53,7 +54,7 @@ function startServer(app, serverOptions = {}) {
         }
 
         if (!isProduction && (argv.watch || argv.dev)) {
-            console.log(now(), `Watch`, require('path').basename(projectCWD))
+            console.log(now(), `Watch project folder:`, require('path').basename(projectCWD))
             var chokidar = require('chokidar')
             chokidar
                 .watch(projectCWD, {
@@ -118,8 +119,21 @@ function startServer(app, serverOptions = {}) {
 
                 if(serverOptions.server === false) return resolve({})
 
+                let public_html_path = require('path').join(process.cwd(), app.config.distFolder)
+
+                console.log(now(),'public_html is',public_html_path)
+
+                app.use(
+                    '/',
+                    express.static(
+                        public_html_path
+                    )
+                )
+
                 const PORT = app.config.env.PORT || process.env.PORT || 3000
-                server.listen(PORT)
+                server.listen(PORT, ()=>{
+                    console.log(now(),'Listen callback')
+                })
                 console.log(
                     now(),
                     `Server ready at`,
@@ -128,12 +142,7 @@ function startServer(app, serverOptions = {}) {
             process.env.NODE_ENV === 'production' ? 'production' : 'development'
           })`
                 )
-                app.use(
-                    '/',
-                    express.static(
-                        require('path').join(process.cwd(), app.config.distFolder)
-                    )
-                )
+                
                 resolve({server})
             }
         }
@@ -221,7 +230,8 @@ function startServer(app, serverOptions = {}) {
 
             await plugins.runPluginsWithPosition('afterFullBuild', app)
 
-            console.log(`${now()} Full build took`, end.seconds().toFixed(3))
+            console.log(`${now()} Full build took`, end.seconds().toFixed(3),`
+Waiting...`)
         }
 
         async function buildFile(options = {}) {
