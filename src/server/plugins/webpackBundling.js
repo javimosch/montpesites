@@ -82,18 +82,16 @@ module.exports = async(app, pluginOptions) => {
 
             let isProd = process.env.NODE_ENV === 'production'
 
-            options.entry = [
-                options.entry
-            ]
+            options.entry = [options.entry]
 
-            if(!isProd){
-                options.entry.unshift('webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000')
-                if(module.framework === 'react'){
+            if (!isProd) {
+                options.entry.unshift(
+                    'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000'
+                )
+                if (module.framework === 'react') {
                     options.entry.unshift('react-hot-loader/patch')
                 }
             }
-
-            debug('entry',options.entry)
 
             output = {
                 filename: options.output.substring(options.output.lastIndexOf('/') + 1),
