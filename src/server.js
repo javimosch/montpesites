@@ -152,6 +152,8 @@ function startServer(app, serverOptions = {}) {
         }
 
         async function buildPage(pageName) {
+            await app.config.refresh()
+
             if (argv.test) {
                 // console.log(`READ PAGE CONFIG ${projectCWD}/src/pages/${pageName}/index.js`)
             }
@@ -177,6 +179,9 @@ function startServer(app, serverOptions = {}) {
             }
 
             let options = await fn(app)
+
+            options.config = app.config
+            Object.assign(options,app.config.context||{})
 
             if (!options) {
                 console.log('SKIP (invalid config file)', pageName)
