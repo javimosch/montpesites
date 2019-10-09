@@ -1,3 +1,17 @@
+const moment = require('moment-timezone')
+var now = () =>
+    moment()
+    .tz('Europe/Paris')
+    .format('DD-MM-YY HH:mm:ss')
+const timeSpan = require('time-span')
+
+var debug = function() {
+    var args = Array.prototype.slice.call(arguments)
+    args.unshift('cleanDistFolders')
+    args.unshift(now())
+    console.log.apply(console, args)
+}
+
 const rimraf = require('rimraf')
 const sander = require('sander')
 module.exports = async(app, pluginpluginOptions) => {
@@ -21,12 +35,16 @@ module.exports = async(app, pluginpluginOptions) => {
                 })
                 .map(dir => {
                     return (async() => {
-                        let rimrafPath = require('path').join(
-                            process.cwd(),
-                            app.config.distFolder,
-                            dir
-                        )
-                        await rimrafPromise(rimrafPath)
+                        try {
+                            let rimrafPath = require('path').join(
+                                process.cwd(),
+                                app.config.distFolder,
+                                dir
+                            )
+                            await rimrafPromise(rimrafPath)
+                        } catch (err) {
+                            debug(err.stack)
+                        }
                     })()
                 })
             )
