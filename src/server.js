@@ -2,10 +2,10 @@ module.exports = {
     startServer
 }
 
-function loadHelpers(app){
+function loadHelpers(app) {
     app.helpers = {}
-    app.helpers.getPages = function(){
-        return require('./server/helpers/getPages').apply({app},arguments)
+    app.helpers.getPages = function () {
+        return require('./server/helpers/getPages').apply({ app }, arguments)
     }
 }
 
@@ -27,7 +27,7 @@ function startServer(app, serverOptions = {}) {
         const timeSpan = require('time-span')
 
 
-       
+
 
         require('./server/handlebarsTemplates')(handlebars)
 
@@ -38,7 +38,7 @@ function startServer(app, serverOptions = {}) {
 
         loadHelpers(app)
 
-        if(argv.build){
+        if (argv.build) {
             argv.build = 'production'
         }
 
@@ -121,11 +121,11 @@ function startServer(app, serverOptions = {}) {
                 require('./server/funqlApi.js')(app)
                 require('./server/editorApi')(app)
 
-                if(serverOptions.server === false) return resolve({})
+                if (serverOptions.server === false) return resolve({})
 
                 let public_html_path = require('path').join(process.cwd(), app.config.distFolder)
 
-                console.log(now(),'public_html is',public_html_path)
+                console.log(now(), 'public_html is', public_html_path)
 
                 app.use(
                     '/',
@@ -135,19 +135,19 @@ function startServer(app, serverOptions = {}) {
                 )
 
                 const PORT = app.config.env.PORT || process.env.PORT || 3000
-                server.listen(PORT, ()=>{
-                    console.log(now(),'Listen callback')
+                server.listen(PORT, () => {
+                    console.log(now(), 'Listen callback')
                 })
                 console.log(
                     now(),
                     `Server ready at`,
                     PORT,
                     `(${
-            process.env.NODE_ENV === 'production' ? 'production' : 'development'
-          })`
+                    process.env.NODE_ENV === 'production' ? 'production' : 'development'
+                    })`
                 )
-                
-                resolve({server})
+
+                resolve({ server })
             }
         }
 
@@ -181,7 +181,7 @@ function startServer(app, serverOptions = {}) {
             let options = await fn(app)
 
             options.config = app.config
-            Object.assign(options,app.config.context||{})
+            Object.assign(options, app.config.context || {})
 
             if (!options) {
                 console.log('SKIP (invalid config file)', pageName)
@@ -197,7 +197,7 @@ function startServer(app, serverOptions = {}) {
                     var fn = pug.compile(raw, {
                         basedir: require('path').join(projectCWD, 'src', `layouts`),
                         pretty: !argv.prod
-                            // globals: Object.assign({}, process.env, argv)
+                        // globals: Object.assign({}, process.env, argv)
                     })
                     raw = fn(options)
                 }
@@ -205,9 +205,9 @@ function startServer(app, serverOptions = {}) {
                     options.page_name =
                         options.page_name ||
                         pageName
-                        .split(`-`)
-                        .join(` `)
-                        .toUpperCase()
+                            .split(`-`)
+                            .join(` `)
+                            .toUpperCase()
                     options = await language.translate(options, app)
                     raw = handlebars.compile(raw)(options)
                 }
@@ -222,7 +222,7 @@ function startServer(app, serverOptions = {}) {
             app.config = await require('./server/config').getConfig(app)
             app.config.distFolder = app.config.distFolder || `public_html`
 
-            if(serverOptions.jest){
+            if (serverOptions.jest) {
                 return runServer()
             }
 
@@ -239,7 +239,7 @@ function startServer(app, serverOptions = {}) {
 
             await plugins.runPluginsWithPosition('afterFullBuild', app)
             let isProduction = process.env.NODE_ENV === 'production'
-            console.log(`${now()} Full build took`, end.seconds().toFixed(3),isProduction?'(Production)':'Development',`
+            console.log(`${now()} Full build took`, end.seconds().toFixed(3), isProduction ? '(Production)' : 'Development', `
 Waiting...`)
         }
 
@@ -317,7 +317,7 @@ Waiting...`)
                     if (partials) {
                         await Promise.all(
                             partials.map(name => {
-                                return (async() => {
+                                return (async () => {
                                     let partialPath = require('path').join(
                                         projectCWD,
                                         'src/layouts',
@@ -328,6 +328,14 @@ Waiting...`)
                                             partialPath
                                         )).toString('utf-8')
                                         raw = raw.split(`%${name.split('.')[0]}%`).join(partialRaw)
+
+                                        try {
+                                            handlebars.registerPartial(name.split('_').join('').split('.')[0], partialRaw);
+                                            //console.log(now(), `HBS Partial loaded`, name.split('_').join('').split('.')[0].green)
+                                        } catch (err) {
+                                            console.log(now(), 'handlebars partial load error', err.stack.yellow)
+                                        }
+
                                     }
                                 })()
                             })
@@ -341,9 +349,9 @@ Waiting...`)
                     raw = await raw
                 }
             }
-            if (argv.prod) {
+            if (app.config.isProduction) {
                 raw = minify(raw, {
-                    removeAttributeQuotes: true,
+                    /*removeAttributeQuotes: true,
                     collapseWhitespace: true,
                     conservativeCollapse: true,
                     minifyCSS: true,
@@ -352,14 +360,14 @@ Waiting...`)
                     removeScriptTypeAttributes: true,
                     useShortDoctype: true,
                     sortClassName: true,
-                    sortAttributes: true
+                    sortAttributes: true*/
                 })
-                var HTMLUglify = require('html-uglify')
+                /*var HTMLUglify = require('html-uglify')
                 var htmlUglify = new HTMLUglify({
                     salt: 'your-custom-salt',
                     whitelist: []
                 })
-                raw = htmlUglify.process(raw)
+                raw = htmlUglify.process(raw)*/
             }
             options.target = options.target.split('index.html').join('')
             options.target = require('path').join(options.target, `index.html`)

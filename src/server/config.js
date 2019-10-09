@@ -4,9 +4,9 @@ const argv = require('yargs').argv
 var config = {}
 module.exports = {
     async getConfig(options = {}) {
-        Object.assign(config,await getConfig(options))
-        config.refresh = async() => {
-            Object.assign(config,await getConfig(options))
+        Object.assign(config, await getConfig(options))
+        config.refresh = async () => {
+            Object.assign(config, await getConfig(options))
         }
         return config
     }
@@ -34,7 +34,7 @@ async function getConfig(options = {}) {
     }
 
     config.env = Object.assign({}, process.env, config.env || {})
-
+    config.isProduction = config.isProd = process.env.NODE_ENV === 'production'
     config.env.PORT = argv.port || process.env.PORT || 3000
     config.argv = argv
 
