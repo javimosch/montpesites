@@ -30,6 +30,15 @@ module.exports = async(app, pluginpluginOptions) => {
                     })()
                 })
             )
+
+            if (pluginOptions.filesGlob) {
+                let rimrafPath = require('path').join(
+                    process.cwd(),
+                    app.config.distFolder,
+                    pluginOptions.filesGlob
+                )
+                await rimrafPromise(rimrafPath)
+            }
         }
     }
 }
