@@ -38,6 +38,10 @@ function startServer(app, serverOptions = {}) {
 
         loadHelpers(app)
 
+        if(argv.build){
+            argv.build = 'production'
+        }
+
         if (!argv.build &&
             !argv.serve &&
             !argv.server &&
@@ -229,8 +233,8 @@ function startServer(app, serverOptions = {}) {
             await Promise.all(pages)
 
             await plugins.runPluginsWithPosition('afterFullBuild', app)
-
-            console.log(`${now()} Full build took`, end.seconds().toFixed(3),`
+            let isProduction = process.env.NODE_ENV === 'production'
+            console.log(`${now()} Full build took`, end.seconds().toFixed(3),isProduction?'(Production)':'Development',`
 Waiting...`)
         }
 

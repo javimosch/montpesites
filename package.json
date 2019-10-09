@@ -1,6 +1,6 @@
 {
     "name": "montpesites",
-    "version": "1.1.7",
+    "version": "1.1.8",
     "description": "Self-hosted platform to build, test and deploy static web sites.",
     "main": "./src/index.js",
     "keywords": [
