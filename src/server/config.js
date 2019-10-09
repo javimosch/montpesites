@@ -1,12 +1,12 @@
 const sander = require('sander')
 const requireFromString = require('require-from-string')
 const argv = require('yargs').argv
-
+var config = {}
 module.exports = {
     async getConfig(options = {}) {
-        let config = await getConfig(options)
+        Object.assign(config,await getConfig(options))
         config.refresh = async() => {
-            config = await getConfig(options)
+            Object.assign(config,await getConfig(options))
         }
         return config
     }
@@ -26,6 +26,7 @@ async function getConfig(options = {}) {
         'ms.config.js'
     )
     var configData = (await sander.readFile(configPath)).toString('utf-8')
+
     let config = requireFromString(configData)
     config = config(options)
     if (config instanceof Promise) {
