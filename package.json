@@ -15,11 +15,13 @@
         "email": "arancibiajav@gmail.com"
     },
     "license": "SEE LICENSE IN LICENCE",
-    "contributors": [{
-        "name": "Javier Leandro Arancibia",
-        "email": "arancibiajav@gmail.com",
-        "url": "https://arancibiajav.misitioba.com/"
-    }],
+    "contributors": [
+        {
+            "name": "Javier Leandro Arancibia",
+            "email": "arancibiajav@gmail.com",
+            "url": "https://arancibiajav.misitioba.com/"
+        }
+    ],
     "scripts": {
         "dev": "nodemon --exec 'node src/index.js --dev' -e js --watch src/index.js --watch src/server --watch ms.config.js",
         "start": "cross-env NODE_ENV=production node src/index --serve",
@@ -28,7 +30,11 @@
     "dependencies": {
         "@alumna/reflect": "^1.0.2",
         "@babel/core": "^7.6.0",
+        "@babel/plugin-transform-react-jsx": "^7.3.0",
+        "@babel/plugin-transform-regenerator": "^7.4.5",
+        "@babel/plugin-transform-runtime": "^7.6.2",
         "@babel/preset-env": "^7.6.0",
+        "@babel/preset-react": "^7.6.3",
         "@fortawesome/fontawesome-svg-core": "^1.2.22",
         "@fortawesome/free-solid-svg-icons": "^5.10.2",
         "@fortawesome/vue-fontawesome": "^0.1.7",
@@ -62,6 +68,10 @@
         "osenv": "^0.1.5",
         "pug": "^2.0.4",
         "pug-plain-loader": "^1.0.0",
+        "react": "^16.10.2",
+        "react-dom": "^16.10.2",
+        "react-hot-loader": "^4.12.15",
+        "react-router-dom": "^5.1.2",
         "regenerator-runtime": "^0.13.3",
         "require-from-string": "^2.0.2",
         "rimraf": "^3.0.0",
