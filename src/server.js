@@ -7,6 +7,16 @@ function loadHelpers(app) {
     app.helpers.getPages = function () {
         return require('./server/helpers/getPages').apply({ app }, arguments)
     }
+    app.helpers.moment = function(){
+        let m = require('moment-timezone')
+        m.locale(process.env.MOMENT_LOCALE||'fr')
+        let mi = m.apply(m,arguments)
+        if(process.env.MOMENT_TZ){
+            mi = mi.tz(process.env.MOMENT_TZ)
+        }
+        return mi
+    }
+    app.helpers.hbs = require('handlebars')
 }
 
 function startServer(app, serverOptions = {}) {
@@ -218,8 +228,11 @@ function startServer(app, serverOptions = {}) {
         }
 
         async function buildSite() {
+            
             const end = timeSpan()
+            
             app.config = await require('./server/config').getConfig(app)
+            
             app.config.distFolder = app.config.distFolder || `public_html`
 
             if (serverOptions.jest) {
