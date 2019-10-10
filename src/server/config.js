@@ -1,13 +1,18 @@
 const sander = require('sander')
 const requireFromString = require('require-from-string')
 const argv = require('yargs').argv
-var config = {}
+var config = null
 module.exports = {
     async getConfig(options = {}) {
+        if (config) {
+            return config
+        }
+        config = config || {}
         Object.assign(config, await getConfig(options))
-        config.refresh = async () => {
+        config.refresh = async() => {
             Object.assign(config, await getConfig(options))
         }
+
         return config
     }
 }
