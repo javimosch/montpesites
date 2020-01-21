@@ -1,17 +1,19 @@
+
+
 module.exports = {
     startServer
 }
 
 function loadHelpers(app) {
     app.helpers = {}
-    app.helpers.getPages = function () {
+    app.helpers.getPages = function() {
         return require('./server/helpers/getPages').apply({ app }, arguments)
     }
-    app.helpers.moment = function(){
+    app.helpers.moment = function() {
         let m = require('moment-timezone')
-        m.locale(process.env.MOMENT_LOCALE||'fr')
-        let mi = m.apply(m,arguments)
-        if(process.env.MOMENT_TZ){
+        m.locale(process.env.MOMENT_LOCALE || 'fr')
+        let mi = m.apply(m, arguments)
+        if (process.env.MOMENT_TZ) {
             mi = mi.tz(process.env.MOMENT_TZ)
         }
         return mi
@@ -24,6 +26,29 @@ function startServer(app, serverOptions = {}) {
     return new Promise((resolve, reject) => {
         let express = require('express')
         app = app || express()
+
+        require('./server/functions')(app)
+
+
+        const bodyParser = require('body-parser')
+        app.use(
+            bodyParser.json({
+                limit: '5mb'
+            })
+        )
+        
+        app.use((req, res, next) => {
+            var debug = require('debug')(
+              `${'app:request'.padEnd(15, ' ')} ${`${Date.now()}`.white}`
+            )
+            let extra = ''
+            if(req.url.indexOf('funql')!==-1){
+                extra = `${req.body.name}:${JSON.stringify(req.body.args||[],null,4
+                    )}` 
+            }
+            debug(`${req.url} ${extra}`)
+            next()
+          })
 
         const { now, moment, argv } = require('./server/commons')()
         const projectCWD = process.cwd()
@@ -122,13 +147,13 @@ function startServer(app, serverOptions = {}) {
 
         var serverStarted = false
 
-        function runServer() {
+        async function runServer() {
             let jest = serverOptions.jest
             if (jest || ((argv.server || argv.serve || argv.dev) && !serverStarted)) {
                 serverStarted = true
                 var server = require('http').Server(app)
 
-                require('./server/funqlApi.js')(app)
+                await require('./server/funqlApi.js')(app)
                 require('./server/editorApi')(app)
 
                 if (serverOptions.server === false) return resolve({})
@@ -207,7 +232,7 @@ function startServer(app, serverOptions = {}) {
                     var fn = pug.compile(raw, {
                         basedir: require('path').join(projectCWD, 'src', `layouts`),
                         pretty: !argv.prod
-                        // globals: Object.assign({}, process.env, argv)
+                            // globals: Object.assign({}, process.env, argv)
                     })
                     raw = fn(options)
                 }
@@ -215,9 +240,9 @@ function startServer(app, serverOptions = {}) {
                     options.page_name =
                         options.page_name ||
                         pageName
-                            .split(`-`)
-                            .join(` `)
-                            .toUpperCase()
+                        .split(`-`)
+                        .join(` `)
+                        .toUpperCase()
                     options = await language.translate(options, app)
                     raw = handlebars.compile(raw)(options)
                 }
@@ -228,20 +253,20 @@ function startServer(app, serverOptions = {}) {
         }
 
         async function buildSite() {
-            
+
             const end = timeSpan()
-            
+
             app.config = await require('./server/config').getConfig(app)
-            
+
             app.config.distFolder = app.config.distFolder || `public_html`
 
             if (serverOptions.jest) {
-                return runServer()
+                return await runServer()
             }
 
             await plugins.runPluginsWithPosition('beforeFullBuild', app)
 
-            runServer()
+            await runServer()
 
             let pagesPath = require('path').join(projectCWD, 'src/pages')
             let pagesList = await sander.readdir(pagesPath)
@@ -330,7 +355,7 @@ Waiting...`)
                     if (partials) {
                         await Promise.all(
                             partials.map(name => {
-                                return (async () => {
+                                return (async() => {
                                     let partialPath = require('path').join(
                                         projectCWD,
                                         'src/layouts',
@@ -364,23 +389,23 @@ Waiting...`)
             }
             if (app.config.isProduction) {
                 raw = minify(raw, {
-                    /*removeAttributeQuotes: true,
-                    collapseWhitespace: true,
-                    conservativeCollapse: true,
-                    minifyCSS: true,
-                    minifyJS: true,
-                    removeComments: true,
-                    removeScriptTypeAttributes: true,
-                    useShortDoctype: true,
-                    sortClassName: true,
-                    sortAttributes: true*/
-                })
-                /*var HTMLUglify = require('html-uglify')
-                var htmlUglify = new HTMLUglify({
-                    salt: 'your-custom-salt',
-                    whitelist: []
-                })
-                raw = htmlUglify.process(raw)*/
+                        /*removeAttributeQuotes: true,
+                        collapseWhitespace: true,
+                        conservativeCollapse: true,
+                        minifyCSS: true,
+                        minifyJS: true,
+                        removeComments: true,
+                        removeScriptTypeAttributes: true,
+                        useShortDoctype: true,
+                        sortClassName: true,
+                        sortAttributes: true*/
+                    })
+                    /*var HTMLUglify = require('html-uglify')
+                    var htmlUglify = new HTMLUglify({
+                        salt: 'your-custom-salt',
+                        whitelist: []
+                    })
+                    raw = htmlUglify.process(raw)*/
             }
             options.target = options.target.split('index.html').join('')
             options.target = require('path').join(options.target, `index.html`)

@@ -1,0 +1,3 @@
+DEBUG=app*,funql*
+MONGO_URI=mongodb://xxx:xxx@localhost:27017
+MONGO_DB=montpesites

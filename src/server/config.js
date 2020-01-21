@@ -3,6 +3,7 @@ const requireFromString = require('require-from-string')
 const argv = require('yargs').argv
 var config = null
 module.exports = {
+    msRealRootPath: '',
     async getConfig(options = {}) {
         if (config) {
             return config

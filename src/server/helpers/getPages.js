@@ -27,7 +27,8 @@ module.exports = async function getPages(options = {}) {
                 let data = {
                     href: config.target || `/${pageName}`,
                     title: config.title || pageName,
-                    data: config
+                    data: config,
+                    ...config
                 }
                 data = await app.translate(
                     Object.assign(data, {

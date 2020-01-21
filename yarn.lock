@@ -3642,6 +3642,11 @@ first-mate@^6.3.0:
     season "^5.0.2"
     underscore-plus "^1"
 
+flatted@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/flatted/-/flatted-2.0.1.tgz#69e57caa8f0eacbc281d2e2cb458d46fdb449e08"
+  integrity sha512-a1hQMktqW9Nmqr5aktAux3JMNqaucxGcjtjWnZLHX7yyPCmlSV3M54nGYbqT8K+0GhF3NBgmJCc3ma+WOgX8Jg==
+
 flush-write-stream@^1.0.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/flush-write-stream/-/flush-write-stream-1.1.1.tgz#8dd7d873a1babc207d94ead0c2e0e44276ebf2e8"
@@ -3774,14 +3779,15 @@ function-bind@^1.1.1:
   resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
   integrity sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==
 
-funql-api@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/funql-api/-/funql-api-1.0.4.tgz#a673fa50c96972237c01903dc2c9259619ff7578"
-  integrity sha512-TVibsFbRNHgnGTrI29tJDSYhFEgq+U6t+gHNrktgzK2ORMpAYLE/dd3Biq+6S8F+CmTVpEnbvsqfE8VXksTpOQ==
+funql-api@^1.1.7:
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/funql-api/-/funql-api-1.1.7.tgz#19c80c9bd9d35c1a2d9c4e91f76312ed7df9f1e4"
+  integrity sha512-Pp04hctM4INgIE/lEMcQrCej6bCEgKH1r+99A+P0hLuarFltNNodtV89KVWci4l9BasttMr2MiIlc1lkXoq2Bg==
   dependencies:
     colors "^1.3.3"
     cors "^2.8.5"
     debug "^4.1.1"
+    flatted "^2.0.1"
     multiparty "^4.2.1"
 
 gauge@~2.7.3:
