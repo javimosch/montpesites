@@ -1,16 +1,19 @@
 
 
-<template>
-  <div class="home"></div>
+<template lang="pug">
+  .Home
+    project-select(ref="prSelect")
+    editor-build(ref="build")
 </template>
 <script>
-import ProjectSelector from "../components/ProjectSelector.vue";
-import loadLocalSession from "../mixins/loadLocalSession";
+import ProjectSelect from "../components/ProjectSelect.vue";
+import EditorBuild from "../components/EditorBuild.vue";
 export default {
   components: {
-    "vue-project-selector": ProjectSelector
+    ProjectSelect,
+    EditorBuild
   },
-  mixins: [loadLocalSession],
+  mixins: [],
   data() {
     return {
       profile: {
@@ -21,20 +24,11 @@ export default {
   },
   methods: {},
   computed: {},
-  mounted() {
-    if (!this.hasValidSession()) {
-      console.log("INVALID SESSION?m GOINT TO PROFILE");
-      setTimeout(() => {
-        this.$router.push({
-          name: "profile"
-        });
-      }, 2000);
-    }
-  }
+  mounted() {}
 };
 </script>
 <style scoped>
-.home {
+.Home {
   margin: 5px;
 }
 </style>

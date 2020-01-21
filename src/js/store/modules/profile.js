@@ -2,7 +2,11 @@
 // shape: [{ id, quantity }]
 const state = {
     username: '',
-    repoUrl: ''
+    repoUrl: '',
+    project: {
+        name: '',
+        repoUrl: ''
+    }
 }
 
 // getters
@@ -16,6 +20,12 @@ const getters = {
 const actions = {
     assignProfile({ commit, state }, newState) {
         commit('assign', newState)
+    },
+    setProject({ commit, state }, pr) {
+        commit(`setProject`, pr)
+    },
+    isProjectDataOK() {
+        return state.project.name && state.project.repoUrl
     }
 }
 
@@ -23,6 +33,9 @@ const actions = {
 const mutations = {
     assign(state, newState) {
         Object.assign(state, newState)
+    },
+    setProject(state, pr) {
+        Object.assign(state.project, pr)
     }
 }
 

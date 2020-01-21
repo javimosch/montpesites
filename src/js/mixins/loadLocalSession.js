@@ -1,4 +1,4 @@
-export default {
+const loadLocalSession = {
     data() {},
     methods: {
         hasValidSession() {
@@ -20,3 +20,4 @@ export default {
         await this.loadLocalSession()
     }
 }
+export default loadLocalSession

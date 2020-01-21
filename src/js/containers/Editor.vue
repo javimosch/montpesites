@@ -29,6 +29,22 @@ export default {
       phase: 0
     };
   },
+  async created() {
+    if (!(await this.$store.dispatch("profile/isProjectDataOK"))) {
+      let isSelected = !!this.$store.state.profile.project.name;
+      if (!isSelected) {
+        this.$router.push({ name: "home" });
+      } else {
+        this.$router.push({
+          name: "project",
+          params: {
+            name: this.$store.state.profile.project.name
+          }
+        });
+      }
+      this.$emit("isProjectDataOK_false");
+    }
+  },
   methods: {
     switchToPhase(index = 0) {
       this.phase = index;
