@@ -32,7 +32,7 @@
         "html-uglify": "^1.2.1",
         "inquirer": "^7.0.0",
         "marky-markdown": "^12.0.0",
-        "moment-timezone": "^0.5.26",
+        "moment-timezone": "^0.5.35",
         "node-sass": "^4.12.0",
         "nodemon": "^1.19.1",
         "osenv": "^0.1.5",
