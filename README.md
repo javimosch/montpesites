@@ -1,3 +1,5 @@
+# DEPRECATED!
+
 # Montpesites
 
 Self-hosted platform to build, test and deploy static web sites.
