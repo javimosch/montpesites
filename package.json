@@ -46,7 +46,7 @@
         "serve": "^10.1.2",
         "sh-exec": "^2.1.0",
         "sitemap-generator": "^8.4.0",
-        "socket.io": "^2.2.0",
+        "socket.io": "^2.5.0",
         "time-span": "^3.1.0",
         "uniqid": "^5.0.3",
         "vue": "^2.6.10",
